@@ -1,4 +1,4 @@
-name: 'appointment-calendar'
+name: 'appointment-calendar-backend'
 
 services:
 
@@ -7,15 +7,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: php8.2-fpm
+      # target: copies
     container_name: appointment-calendar-app
     restart: unless-stopped
     tty: true
     ports:
       - "9000:9000"
-    working_dir: /var/www/html/
     volumes:
-      - ./:/var/www/html/
+      - ./:/var/www/html
     networks:
       - app-network-appointment-calendar
     depends_on:
@@ -24,6 +23,9 @@ services:
   # Nginx Service
   webserver:
     image: nginx:alpine
+    # build:
+    #   context: .
+    #   dockerfile: DockerfileNginx
     container_name: appointment-calendar-webserver
     restart: unless-stopped
     tty: true
@@ -31,8 +33,13 @@ services:
       - "80:80"
       # - "443:443"
     volumes:
-      - ./:/var/www/html/
-      - ./docker/nginx.conf:/etc/nginx/conf.d/app.conf
+      - ./:/var/www/html
+      # - ./docker/nginx.conf /etc/nginx/conf.d/app.conf
+    # develop:
+    #   watch:
+    #     - action: sync+restart
+    #       path: ./docker/nginx.conf
+    #       target: /etc/nginx/conf.d/app.conf
     networks:
       - app-network-appointment-calendar
     depends_on:

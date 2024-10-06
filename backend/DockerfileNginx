@@ -1,0 +1,7 @@
+# Derivando da imagem oficial do MySQL
+FROM nginx:alpine
+
+# Adicionando os scripts SQL para serem executados na criação do banco
+COPY ./docker/nginx.conf /etc/nginx/conf.d/app.conf
+COPY . /var/www/html/
+

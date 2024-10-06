@@ -1,3 +1,11 @@
+# Front-end React
+
+This is the front-end part of the project
+
+To up just this part with docker, make sure to go into this directory and run composer
+
+    docker compose up
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

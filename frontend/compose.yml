@@ -1,0 +1,17 @@
+name: 'appointment-calendar-frontend'
+
+services:
+
+  frontend:
+      build:
+        context: .
+        target: development
+      container_name: appointment-calendar-spa
+      ports:
+        - 3000:3000
+      volumes:
+        - ./:/code/
+      networks:
+        - app-network-appointment-calendar
+      depends_on:
+        - webserver

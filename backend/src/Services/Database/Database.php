@@ -10,8 +10,6 @@ class Database {
 
     public function __construct() {
         try {
-            echo 'Entrou aqui!';
-
             // TODO: GET FROM ENV
             $drive      = 'mysql';
             $host       = 'db';
@@ -25,14 +23,14 @@ class Database {
 
             $this->connection = new PDO($dns, $user, $pass);
 
-            $sth = $this->connection->query('SELECT now()');
+            $sth = $this->connection->query('SELECT now() as date');
             $rows = $sth->fetchAll(PDO::FETCH_ASSOC);
             foreach($rows as $row) {
-                dump($row);
+                dump($row['date']);
             }
 
         } catch(Exception $execption) {
-            dump("Conexão não estabelecida: " . $execption->getMessage());
+            var_dump("Conexão não estabelecida: " . $execption->getMessage());
         }
     }
 }
