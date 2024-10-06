@@ -1,0 +1,69 @@
+name: 'appointment-calendar'
+
+services:
+
+  # PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: php8.2-fpm
+    container_name: appointment-calendar-app
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "9000:9000"
+    working_dir: /var/www/html/
+    volumes:
+      - ./:/var/www/html/
+    networks:
+      - app-network-appointment-calendar
+    depends_on:
+      - db
+
+  # Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: appointment-calendar-webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      # - "443:443"
+    volumes:
+      - ./:/var/www/html/
+      - ./docker/nginx.conf:/etc/nginx/conf.d/app.conf
+    networks:
+      - app-network-appointment-calendar
+    depends_on:
+      - app
+
+  # Banco de Dados
+  db:
+    build:
+      context: .
+      dockerfile: DockerfileMySQL
+    container_name: appointment-calendar-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: appointmentdb
+      MYSQL_USER: user
+      MYSQL_ROOT_PASSWORD: r00tP5WD
+      MYSQL_PASSWORD: u53rP5WD
+    volumes:
+      - dbdata:/var/lib/mysql/
+    networks:
+      - app-network-appointment-calendar
+
+# Docker Networks
+networks:
+  app-network-appointment-calendar:
+    driver: bridge
+
+# Volumes
+volumes:
+  dbdata:
+    driver: local
