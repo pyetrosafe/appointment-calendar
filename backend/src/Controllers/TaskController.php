@@ -1,24 +1,36 @@
 <?php
 namespace App\Controllers;
 
-use Models\AlgumModelo;
-use Symfony\Component\HttpFoundation\Request;
+use Models\Task;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
 
 class TaskController {
 
-  public function list($id): Response
+  /**
+   * Retorna uma única tarefa por ID.
+   */
+  public function show(int $id): Response
   {
-      // ...
-      dump($request ?? '', $id);
-      AlgumModelo::get();
-      return new Response('Task List');
+      $taskModel = new Task();
+      $task = $taskModel->find($id);
+
+      if (!$task) {
+          return new JsonResponse(['error' => 'Task not found'], 404);
+      }
+
+      return new JsonResponse($task);
   }
 
-  public function index() {
-    // Lógica para listar todas as tarefas
-      return new Response('Task Index');
+  /**
+   * Retorna uma lista todas as tarefas.
+   */
+  public function index(): Response
+  {
+    $taskModel = new Task();
+    $tasks = $taskModel->get();
+
+    return new JsonResponse($tasks);
   }
 
   public function store() {

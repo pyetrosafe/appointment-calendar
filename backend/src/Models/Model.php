@@ -6,14 +6,12 @@ use Services\Database;
 
 abstract class Model {
 
-    private Database $db;
-
+    protected ?\PDO $pdo;
     private static $instance;
 
     public function __construct()
     {
-        //
-        $this->db = new Database();
+        $this->pdo = Database::getInstance()->getConnection();
     }
 
     public abstract function get();

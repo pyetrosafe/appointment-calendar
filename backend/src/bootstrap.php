@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Dotenv\Dotenv;
 use Packages\Core;
 use Packages\Routes;
 use Symfony\Component\HttpFoundation\Request;
@@ -10,9 +13,11 @@ use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 
 try {
-
     $request = Request::createFromGlobals();
     $routes = include_once('Routes/routes.php');
+
+    $dotenv = Dotenv::createUnsafeImmutable(__DIR__ . '/..');
+    $dotenv->load();
 
     // Custom class Routes to wrap all routes
     $router = new Routes($routes);
