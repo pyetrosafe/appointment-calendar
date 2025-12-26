@@ -13,7 +13,14 @@ class Routes {
         $this->routes = new RouteCollection();
 
         foreach($routes as $r) {
-            $this->map($r[0], $r[1]);
+            $path = $r[0];
+            $controller = $r[1];
+            $method = $r[2] ?? null; // GET, POST, or null
+
+            // Use a unique name for the route, e.g., /task_POST
+            $routeName = $method ? $path . '_' . $method : $path;
+
+            $this->map($routeName, $path, $controller, $method);
         }
     }
 
@@ -22,8 +29,8 @@ class Routes {
     }
 
     // Associates an URL with a callback function
-    public function map($path, $controller) {
-        // Registers a Route instance into this collection
-        $this->routes->add($path, new Route($path, array('_controller' => $controller)));
+    public function map($name, $path, $controller, $method) {
+        $methods = $method ? [$method] : []; // Route constructor expects an array of methods
+        $this->routes->add($name, new Route($path, ['_controller' => $controller], methods: $methods));
     }
 }

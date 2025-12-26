@@ -1,41 +1,82 @@
 <?php
+
 namespace App\Controllers;
 
 use Models\Task;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class TaskController {
+class TaskController
+{
+    private Task $taskModel;
 
-  /**
-   * Retorna uma única tarefa por ID.
-   */
-  public function show(int $id): Response
-  {
-      $taskModel = new Task();
-      $task = $taskModel->find($id);
+    public function __construct()
+    {
+        $this->taskModel = new Task();
+    }
 
-      if (!$task) {
-          return new JsonResponse(['error' => 'Task not found'], 404);
-      }
+    public function index(): Response
+    {
+        $tasks = $this->taskModel->get();
+        return new JsonResponse($tasks);
+    }
 
-      return new JsonResponse($task);
-  }
+    public function store(): Response
+    {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
 
-  /**
-   * Retorna uma lista todas as tarefas.
-   */
-  public function index(): Response
-  {
-    $taskModel = new Task();
-    $tasks = $taskModel->get();
+        if (!$data) {
+             return new JsonResponse(['error' => 'Invalid JSON'], 400);
+        }
 
-    return new JsonResponse($tasks);
-  }
+        $id = $this->taskModel->create($data);
 
-  public function store() {
-    // Lógica para adicionar uma nova tarefa
-  }
+        if ($id) {
+            return new JsonResponse(['id' => $id, 'message' => 'Task created'], 201);
+        }
 
-  // ... outros métodos
+        return new JsonResponse(['error' => 'Failed to create task'], 500);
+    }
+
+    public function show(int $id): Response
+    {
+        $task = $this->taskModel->find($id);
+
+        if (!$task) {
+            return new JsonResponse(['error' => 'Task not found'], 404);
+        }
+
+        return new JsonResponse($task);
+    }
+
+    public function update(int $id): Response
+    {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+             return new JsonResponse(['error' => 'Invalid JSON'], 400);
+        }
+
+        $success = $this->taskModel->update($id, $data);
+
+        if ($success) {
+            return new JsonResponse(['message' => 'Task updated']);
+        }
+
+        return new JsonResponse(['error' => 'Failed to update task'], 500);
+    }
+
+    public function delete(int $id): Response
+    {
+        $success = $this->taskModel->delete($id);
+
+        if ($success) {
+            return new JsonResponse(['message' => 'Task deleted']);
+        }
+
+        return new JsonResponse(['error' => 'Failed to delete task'], 500);
+    }
 }
