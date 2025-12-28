@@ -23,7 +23,7 @@ try {
     // Define a origem permitida (seu frontend)
     $allowedOrigin = 'http://localhost:3000';
     // Métodos HTTP permitidos
-    $allowedMethods = 'GET, POST, PUT, DELETE, OPTIONS';
+    $allowedMethods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
     // Cabeçalhos permitidos na requisição
     $allowedHeaders = 'Content-Type, Authorization, X-Requested-With'; // Adicione outros cabeçalhos personalizados se usar
 
@@ -31,6 +31,7 @@ try {
     if ($request->getMethod() === 'OPTIONS') {
         $response = new \Symfony\Component\HttpFoundation\Response();
         $response->headers->set('Access-Control-Allow-Headers', $allowedHeaders);
+        $response->headers->set('Access-Control-Allow-Methods', $allowedMethods);
         $response->setStatusCode(204);
         $response->send();
         exit(); // Termina o script após enviar a resposta do preflight
@@ -53,6 +54,7 @@ try {
     $response = $app->handle($request);
     // CORS - Permite Content-Type
     $response->headers->set('Access-Control-Allow-Headers', $allowedHeaders);
+    $response->headers->set('Access-Control-Allow-Methods', $allowedMethods);
     $response->send();
 
 } catch (Exception $execption) {
