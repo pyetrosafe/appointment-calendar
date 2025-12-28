@@ -40,15 +40,17 @@ class Task extends Model {
         $title = $data['title'] ?? 'Nova Tarefa';
         $description = $data['description'] ?? null;
         $dueDate = $data['due_date'] ?? null;
+        $status = $data['status'] ?? 'pending';
 
-        $sql = "INSERT INTO tasks (title, description, due_date) VALUES (:title, :description, :due_date)";
+        $sql = "INSERT INTO tasks (title, description, due_date, status) VALUES (:title, :description, :due_date, :status)";
 
         $stmt = $this->pdo->prepare($sql);
 
         $stmt->execute([
             ':title' => $title,
             ':description' => $description,
-            ':due_date' => $dueDate
+            ':due_date' => $dueDate,
+            ':status' => $status
         ]);
 
         return $this->pdo->lastInsertId();
@@ -77,6 +79,10 @@ class Task extends Model {
         if (array_key_exists('due_date', $data)) {
             $fields[] = 'due_date = :due_date';
             $params[':due_date'] = $data['due_date'];
+        }
+        if (array_key_exists('status', $data)) {
+            $fields[] = 'status = :status';
+            $params[':status'] = $data['status'];
         }
 
         if (empty($fields)) {
