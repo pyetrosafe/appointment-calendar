@@ -21,6 +21,7 @@ $routes[] = array('/task', [TaskController::class, 'index'], 'GET');
 $routes[] = array('/task/{id}', [TaskController::class, 'show'], 'GET');
 $routes[] = array('/task', [TaskController::class, 'store'], 'POST');
 $routes[] = array('/task/{id}', [TaskController::class, 'update'], 'PUT');
+$routes[] = array('/task/{id}/status', [TaskController::class, 'updateStatus'], 'PATCH');
 $routes[] = array('/task/{id}', [TaskController::class, 'delete'], 'DELETE');
 
 return $routes;

@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const TaskForm = ({ onTaskCreated }) => {
+const TaskForm = ({ onTaskCreated, onTaskUpdated, editingTask, setEditingTask }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const isEditing = !!editingTask;
+
+  useEffect(() => {
+    if (editingTask) {
+      setTitle(editingTask.title);
+      setDescription(editingTask.description || '');
+      // Formata a data para o input datetime-local (YYYY-MM-DDTHH:mm)
+      const formattedDate = editingTask.due_date 
+        ? new Date(editingTask.due_date).toISOString().slice(0, 16) 
+        : '';
+      setDueDate(formattedDate);
+    } else {
+      // Limpa o formulário quando não está em modo de edição
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+    }
+  }, [editingTask]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,26 +37,32 @@ const TaskForm = ({ onTaskCreated }) => {
     setSubmitting(true);
     setError('');
 
-    const newTask = {
+    const taskData = {
       title,
       description,
       due_date: dueDate || null,
     };
 
-    api.post('/task', newTask)
+    const request = isEditing
+      ? api.put(`/task/${editingTask.id}`, taskData)
+      : api.post('/task', taskData);
+
+    request
       .then(() => {
-        // Limpa o formulário
+        if (isEditing) {
+          onTaskUpdated(); // Callback para atualizar a lista
+        } else {
+          onTaskCreated(); // Callback para criar
+        }
+        // Limpa e reseta o formulário
         setTitle('');
         setDescription('');
         setDueDate('');
-        // Notifica o componente pai para recarregar a lista
-        if (onTaskCreated) {
-          onTaskCreated();
-        }
+        setEditingTask(null); // Sai do modo de edição
       })
       .catch(err => {
-        console.error('Erro ao criar tarefa:', err);
-        setError('Falha ao criar a tarefa. Tente novamente.');
+        console.error(`Erro ao ${isEditing ? 'atualizar' : 'criar'} tarefa:`, err);
+        setError(`Falha ao ${isEditing ? 'atualizar' : 'criar'} a tarefa. Tente novamente.`);
       })
       .finally(() => {
         setSubmitting(false);
@@ -46,7 +71,7 @@ const TaskForm = ({ onTaskCreated }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h3>Nova Tarefa</h3>
+      <h3>{isEditing ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <div>
         <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Título da tarefa" />
@@ -57,9 +82,16 @@ const TaskForm = ({ onTaskCreated }) => {
       <div>
         <input type="datetime-local" value={dueDate} onChange={e => setDueDate(e.target.value)} />
       </div>
-      <button type="submit" disabled={submitting}>
-        {submitting ? 'Salvando...' : 'Salvar Tarefa'}
-      </button>
+      <div className="form-actions">
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Salvando...' : (isEditing ? 'Atualizar Tarefa' : 'Salvar Tarefa')}
+        </button>
+        {isEditing && (
+          <button type="button" onClick={() => setEditingTask(null)} disabled={submitting}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 };

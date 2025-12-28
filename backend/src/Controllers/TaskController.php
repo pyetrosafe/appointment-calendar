@@ -71,6 +71,24 @@ class TaskController
         return new JsonResponse(['error' => 'Failed to update task'], 500);
     }
 
+    public function updateStatus(int $id): Response
+    {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['status']) || !in_array($data['status'], ['pending', 'completed'])) {
+            return new JsonResponse(['error' => 'Invalid status provided'], 400);
+        }
+
+        $success = $this->taskModel->update($id, ['status' => $data['status']]);
+
+        if ($success) {
+            return new JsonResponse(['message' => 'Task status updated']);
+        }
+
+        return new JsonResponse(['error' => 'Failed to update task status'], 500);
+    }
+
     public function delete(int $id): Response
     {
 
