@@ -42,6 +42,7 @@ class TaskController
 
     public function show(int $id): Response
     {
+
         $task = $this->taskModel->find($id);
 
         if (!$task) {
@@ -54,6 +55,7 @@ class TaskController
     public function update(int $id): Response
     {
         $request = Request::createFromGlobals();
+
         $data = json_decode($request->getContent(), true);
 
         if (!$data) {
@@ -71,6 +73,7 @@ class TaskController
 
     public function delete(int $id): Response
     {
+
         $success = $this->taskModel->delete($id);
 
         if ($success) {

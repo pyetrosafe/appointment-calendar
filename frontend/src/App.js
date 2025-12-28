@@ -1,51 +1,42 @@
-import { useEffect, useState } from 'react';
-import logo from './logo.svg';
-import './App.css';
-import axios from 'axios';
-
-export const api = axios.create({
-  baseURL: "http://localhost"
-});
-
-function Custom({ innerHtml }) {
-  return (
-    <div dangerouslySetInnerHTML={{__html: innerHtml}} ></div>
-  );
-}
+import React, { useState, useEffect, useCallback } from 'react';
+import api from './services/api';
+import TaskList from './components/TaskList';
+import TaskForm from './components/TaskForm';
 
 function App() {
-  let [parag, setParag] = useState();
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    getValue();
+  const fetchTasks = useCallback(() => {
+    setLoading(true);
+    api.get('/task')
+      .then(response => {
+        setTasks(response.data);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Erro ao buscar tarefas:', err);
+        setError('Falha ao carregar tarefas.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  async function getValue() {
-    try {
-      await api.get('').then((response) => {
-        setParag(response.data)
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <Custom innerHtml={parag} />
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+      <header>
+        <h1>Appointment Calendar</h1>
       </header>
+      <main>
+        <TaskForm onTaskCreated={fetchTasks} />
+        <TaskList tasks={tasks} loading={loading} error={error} />
+      </main>
     </div>
   );
 }
