@@ -17,6 +17,8 @@ services:
       - ./:/var/www/html
     networks:
       - app-network-appointment-calendar
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - db
 

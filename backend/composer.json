@@ -9,10 +9,13 @@
         "symfony/http-foundation": "^7.1",
         "symfony/http-kernel": "^7.1",
         "symfony/event-dispatcher": "^7.1",
-        "vlucas/phpdotenv": "^5.6"
+        "vlucas/phpdotenv": "^5.6",
+        "respect/validation": "^2.4"
     },
     "require-dev": {
-        "symfony/var-dumper": "7.1.5"
+        "symfony/var-dumper": "7.1.5",
+        "phpunit/phpunit": "^11.5",
+        "guzzlehttp/guzzle": "^7.10"
     },
     "license": "MIT",
     "autoload": {

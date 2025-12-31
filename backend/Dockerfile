@@ -61,7 +61,8 @@ RUN composer dump-autoload
 # Expose port 9000 and start php-fpm server (for FastCGI Process Manager)
 EXPOSE 9000
 
-USER www-data
+# USER www-data
+USER vscode
 
 CMD ["bash", "-c" , "php-fpm"]
 
@@ -73,7 +74,8 @@ USER root
 RUN pecl install xdebug && docker-php-ext-enable xdebug
 COPY ./docker/xdebug.ini "$PHP_INI_DIR/conf.d/99-xdebug.ini"
 
-USER www-data
+# USER www-data
+USER vscode
 
 CMD ["bash", "-c" , "php-fpm"]
 

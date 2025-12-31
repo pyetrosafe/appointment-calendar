@@ -31,16 +31,16 @@ class Task extends Model {
     /**
      * Cria uma nova tarefa.
      *
-     * @param array $data Dados da tarefa (ex: ['title' => 'Minha Tarefa'])
+     * @param object $data Dados da tarefa (ex: ['title' => 'Minha Tarefa'])
      * @return string|false O ID da última linha inserida ou falso em caso de falha.
      */
-    public function create(array $data)
+    public function create(object $data)
     {
         // Garante que apenas os campos esperados sejam inseridos
-        $title = $data['title'] ?? 'Nova Tarefa';
-        $description = $data['description'] ?? null;
-        $dueDate = $data['due_date'] ?? null;
-        $status = $data['status'] ?? 'pending';
+        $title = $data->title ?? 'Nova Tarefa';
+        $description = $data->description ?? null;
+        $dueDate = $data->due_date ?? null;
+        $status = $data->status ?? 'pending';
 
         $sql = "INSERT INTO tasks (title, description, due_date, status) VALUES (:title, :description, :due_date, :status)";
 
@@ -60,29 +60,32 @@ class Task extends Model {
      * Atualiza uma tarefa existente.
      *
      * @param int $id
-     * @param array $data
+     * @param object $data
      * @return bool
      */
-    public function update(int $id, array $data): bool
+    public function update(int $id, object $data): bool
     {
         $fields = [];
         $params = [];
 
-        if (isset($data['title'])) {
+        if (isset($data->title)) {
             $fields[] = 'title = :title';
-            $params[':title'] = $data['title'];
+            $params[':title'] = $data->title;
         }
-        if (array_key_exists('description', $data)) {
+
+        if (property_exists($data, 'description')) {
             $fields[] = 'description = :description';
-            $params[':description'] = $data['description'];
+            $params[':description'] = $data->description;
         }
-        if (array_key_exists('due_date', $data)) {
+
+        if (property_exists($data, 'due_date')) {
             $fields[] = 'due_date = :due_date';
-            $params[':due_date'] = $data['due_date'];
+            $params[':due_date'] = $data->due_date;
         }
-        if (array_key_exists('status', $data)) {
+
+        if (property_exists($data, 'status')) {
             $fields[] = 'status = :status';
-            $params[':status'] = $data['status'];
+            $params[':status'] = $data->status;
         }
 
         if (empty($fields)) {
