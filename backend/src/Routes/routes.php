@@ -1,6 +1,6 @@
 <?php
 
-use App\Controllers\TaskController;
+use Controllers\TaskController;
 use Symfony\Component\HttpFoundation\Response;
 
 $routes = array();

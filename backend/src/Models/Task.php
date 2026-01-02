@@ -4,6 +4,21 @@ namespace Models;
 
 class Task extends Model {
 
+    /** @var int */
+    public int $id;
+
+    /** @var string */
+    public string $title;
+
+    /** @var string|null */
+    public ?string $description;
+
+    /** @var string */
+    public string $status;
+
+    /** @var string|null */
+    public ?string $due_date;
+
     /**
      * Busca todas as tarefas do banco de dados.
      *
