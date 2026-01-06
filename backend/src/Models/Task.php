@@ -2,73 +2,73 @@
 
 namespace Models;
 
+use \DTOs\DTO;
+use Exception;
+
+use function PHPUnit\Framework\throwException;
+
 class Task extends Model {
 
     /** @var int */
-    public int $id;
+    public ?int $id = 0;
 
     /** @var string */
-    public string $title;
+    public string $title = '';
 
     /** @var string|null */
-    public ?string $description;
+    public ?string $description = '';
 
-    /** @var string */
-    public string $status;
+    /** @var 'pending'|'completed' */
+    public string $status = 'pending';
 
     /** @var string|null */
-    public ?string $due_date;
+    public ?string $due_date = '';
 
-    /**
-     * Busca todas as tarefas do banco de dados.
-     *
-     * @return array
-     */
-    public function get(): array
-    {
-        $stmt = $this->pdo->query("SELECT * FROM tasks ORDER BY created_at DESC");
-        return $stmt->fetchAll();
-    }
+    /** @var string|null */
+    public ?string $created_at = '';
 
-    /**
-     * Busca uma única tarefa pelo seu ID.
-     *
-     * @param int $id
-     * @return array|false
-     */
-    public function find(int $id)
+    /** @var string|null */
+    public ?string $updated_at = '';
+
+    protected function table(): string
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM tasks WHERE id = ?");
-        $stmt->execute([$id]);
-        return $stmt->fetch();
+        return 'tasks';
     }
 
     /**
      * Cria uma nova tarefa.
      *
      * @param object $data Dados da tarefa (ex: ['title' => 'Minha Tarefa'])
-     * @return string|false O ID da última linha inserida ou falso em caso de falha.
+     * @return self A instância persistida ou Exception em caso de falha.
      */
-    public function create(object $data)
+    public function create(DTO $dto): self
     {
+        if ($this->id != 0)
+            throw new Exception('Task already exists');
+
         // Garante que apenas os campos esperados sejam inseridos
-        $title = $data->title ?? 'Nova Tarefa';
-        $description = $data->description ?? null;
-        $dueDate = $data->due_date ?? null;
-        $status = $data->status ?? 'pending';
+        $this->fromObject($dto);
 
         $sql = "INSERT INTO tasks (title, description, due_date, status) VALUES (:title, :description, :due_date, :status)";
 
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->prepare($sql);
 
         $stmt->execute([
-            ':title' => $title,
-            ':description' => $description,
-            ':due_date' => $dueDate,
-            ':status' => $status
+            ':title' => $this->title,
+            ':description' => $this->description,
+            ':due_date' => $this->due_date,
+            ':status' => $this->status
         ]);
 
-        return $this->pdo->lastInsertId();
+        $id = $this->lastInsertId();
+
+        if (!$id) {
+            return $this->throwPDOError();
+        }
+
+        // Busca os dados recém-criados para obter campos automáticos como timestamps
+        $this->find($id);
+        return $this;
     }
 
     /**
@@ -78,39 +78,32 @@ class Task extends Model {
      * @param object $data
      * @return bool
      */
-    public function update(int $id, object $data): bool
+    public function update(DTO $dto): bool
     {
+        if (!$this->id) {
+            throw new Exception('Task ID is required for update.');
+        }
+
         $fields = [];
-        $params = [];
+        $params[":id"] = $this->id;
 
-        if (isset($data->title)) {
-            $fields[] = 'title = :title';
-            $params[':title'] = $data->title;
-        }
+        $data = $dto->toArray();
+        unset($data['id']); // Remove o ID
 
-        if (property_exists($data, 'description')) {
-            $fields[] = 'description = :description';
-            $params[':description'] = $data->description;
-        }
-
-        if (property_exists($data, 'due_date')) {
-            $fields[] = 'due_date = :due_date';
-            $params[':due_date'] = $data->due_date;
-        }
-
-        if (property_exists($data, 'status')) {
-            $fields[] = 'status = :status';
-            $params[':status'] = $data->status;
+        foreach($data as $k => $v) {
+            if (property_exists($this, $k) && $this->$k !== $v) {
+                $fields[] = "{$k} = :{$k}";
+                $params[":{$k}"] = $v;
+            }
         }
 
         if (empty($fields)) {
-            return false;
+            return true; // Nothing to update, consider it a successful "update"
         }
 
         $sql = "UPDATE tasks SET " . implode(', ', $fields) . " WHERE id = :id";
-        $params[':id'] = $id;
 
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->prepare($sql);
         return $stmt->execute($params);
     }
 
@@ -122,7 +115,7 @@ class Task extends Model {
      */
     public function delete(int $id): bool
     {
-        $stmt = $this->pdo->prepare("DELETE FROM tasks WHERE id = :id");
+        $stmt = $this->prepare("DELETE FROM tasks WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
 }

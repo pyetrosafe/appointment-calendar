@@ -49,9 +49,7 @@ services:
 
   # Banco de Dados
   db:
-    build:
-      context: .
-      dockerfile: DockerfileMySQL
+    image: mysql:8.0
     container_name: appointment-calendar-db
     restart: unless-stopped
     tty: true
@@ -64,6 +62,7 @@ services:
       MYSQL_PASSWORD: u53rP5WD
     volumes:
       - dbdata:/var/lib/mysql/
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     networks:
       - app-network-appointment-calendar
 

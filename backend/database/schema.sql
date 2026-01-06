@@ -2,7 +2,8 @@ CREATE TABLE tasks (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT,
-  status ENUM('pending', 'completed') DEFAULT 'pending',
+  status ENUM('pending', 'in_progress', 'completed') DEFAULT 'pending',
+  due_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  due_date DATE
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

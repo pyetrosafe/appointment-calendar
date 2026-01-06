@@ -11,7 +11,8 @@ class Database {
     private ?PDO $connection = null;
 
     // O construtor é privado para prevenir a criação de instâncias diretas
-    private function __construct() {
+    private function __construct()
+    {
         try {
             $drive   = getenv('DB_CONNECTION', 'mysql');
             $host    = getenv('DB_HOST', 'localhost');
@@ -53,6 +54,26 @@ class Database {
     public function getConnection(): PDO
     {
         return $this->connection;
+    }
+
+    public function query($args)
+    {
+        return $this->connection->query($args);
+    }
+
+    public function prepare($args)
+    {
+        return $this->connection->prepare($args);
+    }
+
+    public function exec($args)
+    {
+        return $this->connection->exec($args);
+    }
+
+    public function lastInsertId()
+    {
+        return $this->connection->lastInsertId();
     }
 
     // Previne a clonagem da instância
