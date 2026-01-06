@@ -26,6 +26,11 @@ class Core implements HttpKernelInterface
             $request->attributes->add($this->matcher->match($request->getPathInfo()));
 
             $controller = $this->controllerResolver->getController($request);
+
+            if (false === $controller) {
+                throw new ResourceNotFoundException(sprintf('Unable to find the controller for path "%s". The route "new" has a null controller.', $request->getPathInfo()));
+            }
+            
             $arguments = $this->argumentResolver->getArguments($request, $controller);
 
             return call_user_func_array($controller, $arguments);

@@ -15,7 +15,7 @@ $routes[] = array('/favicon.ico', function () { return null; });
 
 $routes[] = array('/', function () {
     return new Response('This is the home page');
-});
+}, 'GET');
 
 $routes[] = array('/task', [TaskController::class, 'index'], 'GET');
 $routes[] = array('/task/{id}', [TaskController::class, 'show'], 'GET');

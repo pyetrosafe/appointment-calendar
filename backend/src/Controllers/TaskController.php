@@ -12,11 +12,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TaskController
 {
-    private TaskService $taskService;
 
-    public function __construct()
+    public function __construct(private TaskService $taskService)
     {
-        $this->taskService = new TaskService();
     }
 
     public function index(): Response
@@ -25,9 +23,8 @@ class TaskController
         return new JsonResponse($tasks);
     }
 
-    public function store(): Response
+    public function store(Request $request): Response
     {
-        $request = Request::createFromGlobals();
         $data = json_decode($request->getContent());
 
         if (!$data) {
@@ -56,9 +53,8 @@ class TaskController
         return new JsonResponse($task);
     }
 
-    public function update(int $id): Response
+    public function update(Request $request, int $id): Response
     {
-        $request = Request::createFromGlobals();
         $data = json_decode($request->getContent());
 
         if (!$data) {
@@ -84,9 +80,8 @@ class TaskController
         }
     }
 
-    public function updateStatus(int $id): Response
+    public function updateStatus(Request $request, int $id): Response
     {
-        $request = Request::createFromGlobals();
         $data = json_decode($request->getContent());
 
         if (!isset($data->status)) {
