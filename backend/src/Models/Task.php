@@ -35,6 +35,16 @@ class Task extends Model {
         return 'tasks';
     }
 
+    protected function fillable(): array
+    {
+        return [
+            'title',
+            'description',
+            'status',
+            'due_date',
+        ];
+    }
+
     /**
      * Cria uma nova tarefa.
      *

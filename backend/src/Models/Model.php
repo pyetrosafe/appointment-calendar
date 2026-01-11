@@ -39,6 +39,29 @@ abstract class Model {
         return $this;
     }
 
+    /**
+     * Preenche o model com um array de atributos.
+     * Apenas os atributos definidos na propriedade $fillable do model filho serão preenchidos.
+     *
+     * @param array $attributes
+     * @return static
+     */
+    public function fill(array $attributes): static
+    {
+        // Chama o método fillable() se ele existir no model filho.
+        if (!method_exists($this, 'fillable')) {
+            return $this;
+        }
+
+        foreach ($this->fillable() as $key) {
+            if (array_key_exists($key, $attributes)) {
+                $this->{$key} = $attributes[$key];
+            }
+        }
+
+        return $this;
+    }
+
     public function __call($name, $arguments)
     {
         if ($this::class !== self::class && method_exists($this, $name)) {
