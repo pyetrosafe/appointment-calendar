@@ -21,12 +21,11 @@ class TaskService
      */
     public function getAllTasks(): array
     {
-        $tasksData = $this->taskModel->get();
+        $tasks = Task::all();
 
-        return array_map(function ($taskData) {
-            $taskDto = TaskDTO::fromArray($taskData);
-            return $taskDto;
-        }, $tasksData);
+        return array_map(function (Task $task) {
+            return TaskDTO::fromObject($task);
+        }, $tasks);
     }
 
     public function getTask(int $id): ?TaskDTO

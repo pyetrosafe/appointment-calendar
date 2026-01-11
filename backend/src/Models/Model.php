@@ -76,10 +76,19 @@ abstract class Model {
      *
      * @return array
      */
-    protected function get(): array
+    protected function all(): array
     {
         $stmt = $this->query("SELECT * FROM " . $this->table() . " ORDER BY created_at DESC");
-        return $stmt->fetchAll();
+        $results = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+        $collection = [];
+        foreach ($results as $result) {
+            $model = new static();
+            $model->fromObject($result);
+            $collection[] = $model;
+        }
+        
+        return $collection;
     }
 
     /**
