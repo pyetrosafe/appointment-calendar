@@ -76,7 +76,7 @@ abstract class Model {
      *
      * @return array
      */
-    public function get(): array
+    protected function get(): array
     {
         $stmt = $this->query("SELECT * FROM " . $this->table() . " ORDER BY created_at DESC");
         return $stmt->fetchAll();
@@ -88,13 +88,18 @@ abstract class Model {
      * @param int $id
      * @return array|false
      */
-    public function find(int $id): array|false
+    protected function find(int $id): ?static
     {
         $stmt = $this->prepare("SELECT * FROM " . $this->table() . " WHERE id = ?");
         $stmt->execute([$id]);
-        $data = $stmt->fetch();
+        $data = $stmt->fetch(PDO::FETCH_OBJ);
+
+        if (!$data) {
+            return null;
+        }
+        
         $this->fromObject($data);
-        return $data;
+        return $this;
     }
 
     /**
@@ -102,7 +107,7 @@ abstract class Model {
      *
      * @return bool
      */
-    public function save(): bool
+    protected function save(): bool
     {
         $fields = get_object_vars($this);
         unset($fields['id']); // Remove o ID para inserção

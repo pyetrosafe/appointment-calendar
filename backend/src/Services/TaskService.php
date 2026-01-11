@@ -31,13 +31,13 @@ class TaskService
 
     public function getTask(int $id): ?TaskDTO
     {
-        $this->taskModel->find($id);
+        $task = Task::find($id);
 
-        if (!$this->taskModel->id) {
+        if (!$task) {
             return null;
         }
 
-        return TaskDTO::fromObject($this->taskModel);
+        return TaskDTO::fromObject($task);
     }
 
     /**
