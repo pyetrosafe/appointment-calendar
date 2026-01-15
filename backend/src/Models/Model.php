@@ -110,7 +110,7 @@ abstract class Model {
             $model->fromObject($result);
             $collection[] = $model;
         }
-        
+
         return $collection;
     }
 
@@ -118,7 +118,7 @@ abstract class Model {
      * Busca uma única tarefa pelo seu ID.
      *
      * @param int $id
-     * @return array|false
+     * @return static|false
      */
     protected function find(int $id): ?static
     {
@@ -129,26 +129,132 @@ abstract class Model {
         if (!$data) {
             return null;
         }
-        
+
         $this->fromObject($data);
         return $this;
     }
 
     /**
-     * Salva o modelo no banco de dados.
+     * Salva o modelo no banco de dados, decidindo entre Inserir ou Atualizar.
      *
      * @return bool
      */
-    protected function save(): bool
+    public function save(): bool
     {
-        $fields = get_object_vars($this);
-        unset($fields['id']); // Remove o ID para inserção
-        unset($fields['created_at']); // Remove created_at para inserção
+        if (isset($this->id) && $this->id > 0) {
+            return $this->performUpdate();
+        } else {
+            return $this->performInsert();
+        }
+    }
 
-        $columns = implode(', ', array_keys($fields));
-        $placeholders = implode(', ', array_fill(0, count($fields), '?'));
+    /**
+     * Executa a lógica de UPDATE para um modelo existente.
+     *
+     * @return bool
+     */
+    protected function performUpdate(): bool
+    {
+        $params = $this->getProperties();
 
-        $stmt = $this->prepare("INSERT INTO " . $this->table() . " ({$columns}) VALUES ({$placeholders})");
-        return $stmt->execute(array_values($fields));
+        if (empty($params)) {
+            return true; // Nada a ser atualizado
+        }
+
+        $values = $this->getParamsValues($params);
+        $values[':id'] = $this->id;
+
+        $sql = "UPDATE " . $this->table() . " SET " . implode(', ', array_column($params, 'key_marker')) . " WHERE id = :id";
+
+        $stmt = $this->prepare($sql);
+        return $stmt->execute($values);
+    }
+
+    /**
+     * Executa a lógica de INSERT para um novo modelo.
+     *
+     * @return bool
+     */
+    protected function performInsert(): bool
+    {
+        $params = $this->getProperties();
+
+        if (empty($params)) {
+            return false; // Nada a ser inserido
+        }
+
+        $columns = implode(', ', array_keys($params));
+        $markers = implode(', ', array_column($params, 'marker'));
+
+        $sql = "INSERT INTO " . $this->table() . " ({$columns}) VALUES ({$markers})";
+
+        $stmt = $this->getConnection()->prepare($sql);
+        $success = $stmt->execute($this->getParamsValues($params));
+
+        if ($success) {
+            $this->id = $this->getConnection()->lastInsertId();
+        }
+
+        return $success;
+    }
+
+    /**
+     * Retorna um array associativo dos atributos do modelo para inserção ou atualização.
+     * Prioriza o método fillable() se definido, caso contrário, usa todas as propriedades do objeto.
+     *
+     * @return array
+     */
+    protected function getProperties(): array
+    {
+        $fields = method_exists($this, 'fillable') ? $this->fromFillable() : $this->fromObjectVars();
+
+        $params = [];
+        foreach($fields as $key => $value) {
+            $params[$key] = array(
+                'marker' => ":{$key}",
+                'key_marker' => "{$key} = :{$key}",
+                'value' => $value
+            );
+        }
+
+        return $params;
+    }
+
+    /**
+     * Retorna um array associativo dos atributos do modelo que são definidos no método fillable().
+     *
+     * @return array
+     */
+    protected function fromFillable(): array
+    {
+        $params = [];
+        foreach ($this->fillable() as $key) {
+             if (property_exists($this, $key)) {
+                $params[$key] = $this->{$key};
+            }
+        }
+        return $params;
+    }
+
+    /**
+     * Retorna um array associativo de todas as propriedades públicas e protegidas do modelo,
+     * excluindo 'id', 'created_at', 'updated_at' e 'deleted_at'.
+     *
+     * @return array
+     */
+    protected function fromObjectVars(): array
+    {
+        $params = get_object_vars($this);
+        unset($params['id']); // Remove o ID para inserção
+        unset($params['created_at']); // Remove created_at para inserção
+        unset($params['updated_at']); // Remove updated_at para inserção
+        unset($params['deleted_at']); // Remove deleted_at para inserção
+
+        return $params;
+    }
+
+    private function getParamsValues(array $params): array
+    {
+        return array_combine(array_column($params, 'marker'), array_column($params, 'value'));
     }
 }

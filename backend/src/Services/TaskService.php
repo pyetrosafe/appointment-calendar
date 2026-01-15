@@ -54,27 +54,33 @@ class TaskService
      */
     public function updateTask($id, object $data): bool
     {
-        // Se nada foi fornecido para atualizar, consideramos a operação bem-sucedida.
-        if (empty($data)) {
+        $task = Task::find($id);
+
+        if (!$task) {
             return false;
         }
 
-        $taskDto = TaskDTO::fromObject((object) array_merge($this->taskModel->find($id), (array) $data));
+        $taskDto = TaskDTO::fromObject((object) array_merge((array) $task, (array) $data));
         $taskDto->validate();
 
-        return $this->taskModel->update($taskDto);
+        $task->fill((array) $taskDto);
+        return $task->save();
     }
 
     public function updateTaskStatus(int $id, string $status): bool
     {
-        // if (!in_array($status, ['pending', 'in_progress', 'completed'])) {
-        //     return false;
-        // }
+        $task = Task::find($id);
 
-        $taskDto = TaskDTO::fromObject((object) array_merge($this->taskModel->find($id), ['status' => $status]));
+        if (!$task) {
+            return false;
+        }
+
+        $task->status = $status;
+
+        $taskDto = TaskDTO::fromObject($task);
         $taskDto->validate();
 
-        return $this->taskModel->update($taskDto);
+        return $task->save();
     }
 
     public function deleteTask(int $id): bool
