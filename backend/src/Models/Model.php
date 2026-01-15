@@ -234,7 +234,7 @@ abstract class Model {
         try {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $sql = "DELETE FROM " . $this->table() . " WHERE id IN ({$placeholders})";
-            
+
             $stmt = $this->getConnection()->prepare($sql);
             $stmt->execute($ids);
 
@@ -304,6 +304,8 @@ abstract class Model {
 
             if ($success) {
                 $this->id = $this->getConnection()->lastInsertId();
+                // Reload the model to get auto-generated fields like 'id', 'created_at', 'updated_at'
+                $this->find($this->id);
             }
             else if ($stmt->errorCode() !== '00000') {
                 $this->throwPDOError();
