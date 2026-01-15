@@ -45,8 +45,8 @@ class TaskService
     public function createTask(TaskDTO $dto): TaskDTO
     {
         $dto->validate();
-        $this->taskModel->create($dto);
-        return TaskDTO::fromObject($this->taskModel);
+        $task = Task::create($dto->toArray());
+        return TaskDTO::fromObject($task);
     }
 
     /**
@@ -60,10 +60,14 @@ class TaskService
             return false;
         }
 
-        $taskDto = TaskDTO::fromObject((object) array_merge((array) $task, (array) $data));
+        // Preenche o modelo com os novos dados
+        $task->fill((array) $data);
+
+        // Cria um DTO a partir do estado atualizado do modelo para validação
+        $taskDto = TaskDTO::fromObject($task);
         $taskDto->validate();
 
-        $task->fill((array) $taskDto);
+        // Salva o modelo, que já foi atualizado
         return $task->save();
     }
 
@@ -75,8 +79,10 @@ class TaskService
             return false;
         }
 
-        $task->status = $status;
+        // Usa o método fill para consistência
+        $task->fill(['status' => $status]);
 
+        // Cria um DTO para garantir que o estado final seja válido
         $taskDto = TaskDTO::fromObject($task);
         $taskDto->validate();
 

@@ -45,41 +45,6 @@ class Task extends Model {
         ];
     }
 
-    /**
-     * Cria uma nova tarefa.
-     *
-     * @param object $data Dados da tarefa (ex: ['title' => 'Minha Tarefa'])
-     * @return self A instância persistida ou Exception em caso de falha.
-     */
-    public function create(DTO $dto): self
-    {
-        if ($this->id != 0)
-            throw new Exception('Task already exists');
-
-        // Garante que apenas os campos esperados sejam inseridos
-        $this->fromObject($dto);
-
-        $sql = "INSERT INTO tasks (title, description, due_date, status) VALUES (:title, :description, :due_date, :status)";
-
-        $stmt = $this->prepare($sql);
-
-        $stmt->execute([
-            ':title' => $this->title,
-            ':description' => $this->description,
-            ':due_date' => $this->due_date,
-            ':status' => $this->status
-        ]);
-
-        $id = $this->lastInsertId();
-
-        if (!$id) {
-            return $this->throwPDOError();
-        }
-
-        // Busca os dados recém-criados para obter campos automáticos como timestamps
-        $this->find($id);
-        return $this;
-    }
 
     /**
      * Atualiza uma tarefa existente.

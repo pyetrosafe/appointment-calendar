@@ -5,7 +5,9 @@ namespace Models;
 use Services\Database;
 use \PDO;
 use Exception;
+use PDOException;
 use Symfony\Component\VarDumper\Cloner\Data;
+use Throwable;
 
 abstract class Model {
 
@@ -24,7 +26,16 @@ abstract class Model {
 
     protected function throwPDOError()
     {
-        throw new Exception('Failed to execute query:' . $this->getConnection()->errorCode() . ' - ' . implode(" ", $this->pdo->errorInfo()));
+        $errorInfo = $this->getConnection()->errorInfo();
+
+        // '00000' means no error
+        if (!empty($errorInfo[0]) && $errorInfo[0] !== '00000') {
+            $errorMessage = "SQLSTATE: " . $errorInfo[0] . " - Driver Error Code: " . $errorInfo[1] . " - Error Message: " . $errorInfo[2];
+            throw new Exception('Failed to execute query: ' . $errorMessage);
+        } else {
+            // If no specific PDO error, throw a generic exception
+            throw new Exception('Failed to execute query: Unknown PDO error.');
+        }
     }
 
     protected function fromObject($object)
@@ -79,7 +90,10 @@ abstract class Model {
         }
     }
 
-    public static function __callStatic($name, $arguments)
+    /**
+     * Handle dynamic static method calls.
+     */
+    public static function __callStatic(string $name, array $arguments)
     {
         if (method_exists(static::class, $name)) {
             return call_user_func_array([new static(), $name], $arguments);
@@ -141,10 +155,35 @@ abstract class Model {
      */
     public function save(): bool
     {
-        if (isset($this->id) && $this->id > 0) {
-            return $this->performUpdate();
-        } else {
-            return $this->performInsert();
+        try {
+            if (isset($this->id) && $this->id > 0) {
+                return $this->performUpdate();
+            } else {
+                return $this->performInsert();
+            }
+        } catch (PDOException $e) {
+            $this->throwPDOError();
+        } catch (Throwable $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Cria e salva uma nova instância do modelo.
+     *
+     * @param array $attributes Os atributos para preencher o modelo.
+     * @return static A nova instância do modelo.
+     */
+    protected function create(array $values): static
+    {
+        try {
+            $instance = (new static())->fill($values);
+            $instance->save();
+            return $instance;
+        } catch (PDOException $e) {
+            $this->throwPDOError();
+        } catch (Throwable $e) {
+            throw $e;
         }
     }
 
@@ -155,19 +194,31 @@ abstract class Model {
      */
     protected function performUpdate(): bool
     {
-        $params = $this->getProperties();
+        try {
+            $params = $this->getProperties();
 
-        if (empty($params)) {
-            return true; // Nada a ser atualizado
+            if (empty($params)) {
+                return false; // Nada a ser atualizado
+            }
+
+            $values = $this->getParamsValues($params);
+            $values[':id'] = $this->id;
+
+            $sql = "UPDATE " . $this->table() . " SET " . implode(', ', array_column($params, 'key_marker')) . " WHERE id = :id";
+
+            $stmt = $this->prepare($sql);
+            $success = $stmt->execute($values);
+
+            if (!$success && $stmt->errorCode() !== '00000') {
+                $this->throwPDOError();
+            }
+
+            return $success;
+        } catch (PDOException $e) {
+            $this->throwPDOError();
+        } catch (Throwable $e) {
+            throw $e;
         }
-
-        $values = $this->getParamsValues($params);
-        $values[':id'] = $this->id;
-
-        $sql = "UPDATE " . $this->table() . " SET " . implode(', ', array_column($params, 'key_marker')) . " WHERE id = :id";
-
-        $stmt = $this->prepare($sql);
-        return $stmt->execute($values);
     }
 
     /**
@@ -177,25 +228,34 @@ abstract class Model {
      */
     protected function performInsert(): bool
     {
-        $params = $this->getProperties();
+        try {
+            $params = $this->getProperties();
 
-        if (empty($params)) {
-            return false; // Nada a ser inserido
+            if (empty($params)) {
+                return false; // Nada a ser inserido
+            }
+
+            $columns = implode(', ', array_keys($params));
+            $markers = implode(', ', array_column($params, 'marker'));
+
+            $sql = "INSERT INTO " . $this->table() . " ({$columns}) VALUES ({$markers})";
+
+            $stmt = $this->getConnection()->prepare($sql);
+            $success = $stmt->execute($this->getParamsValues($params));
+
+            if ($success) {
+                $this->id = $this->getConnection()->lastInsertId();
+            }
+            else if ($stmt->errorCode() !== '00000') {
+                $this->throwPDOError();
+            }
+
+            return $success;
+        } catch (PDOException $e) {
+            $this->throwPDOError();
+        } catch (Throwable $e) {
+            throw $e;
         }
-
-        $columns = implode(', ', array_keys($params));
-        $markers = implode(', ', array_column($params, 'marker'));
-
-        $sql = "INSERT INTO " . $this->table() . " ({$columns}) VALUES ({$markers})";
-
-        $stmt = $this->getConnection()->prepare($sql);
-        $success = $stmt->execute($this->getParamsValues($params));
-
-        if ($success) {
-            $this->id = $this->getConnection()->lastInsertId();
-        }
-
-        return $success;
     }
 
     /**
