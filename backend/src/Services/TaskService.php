@@ -9,13 +9,6 @@ use Respect\Validation\Exceptions\NestedValidationException;
 
 class TaskService
 {
-    private Task $taskModel;
-
-    public function __construct()
-    {
-        $this->taskModel = new Task();
-    }
-
     /**
      * @return TaskDTO[]
      */
@@ -91,6 +84,6 @@ class TaskService
 
     public function deleteTask(int $id): bool
     {
-        return $this->taskModel->delete($id);
+        return Task::destroy($id) > 0;
     }
 }

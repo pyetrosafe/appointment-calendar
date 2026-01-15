@@ -188,6 +188,65 @@ abstract class Model {
     }
 
     /**
+     * Exclui o registro do modelo do banco de dados.
+     *
+     * @return bool
+     */
+    public function delete(): bool
+    {
+        if (!isset($this->id) || $this->id <= 0) {
+            return false;
+        }
+
+        try {
+            $sql = "DELETE FROM " . $this->table() . " WHERE id = :id";
+            $stmt = $this->getConnection()->prepare($sql);
+            $success = $stmt->execute([':id' => $this->id]);
+
+            if (!$success && $stmt->errorCode() !== '00000') {
+                $this->throwPDOError();
+            }
+
+            return $success;
+        } catch (PDOException $e) {
+            $this->throwPDOError();
+        } catch (Throwable $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Exclui um ou mais modelos pelo seu ID.
+     *
+     * @param int|array $ids
+     * @return int O número de registros excluídos.
+     */
+    protected function destroy(int|array $ids): int
+    {
+        if (is_int($ids)) {
+            $ids = [$ids];
+        }
+
+        if (empty($ids)) {
+            return 0;
+        }
+
+        try {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $sql = "DELETE FROM " . $this->table() . " WHERE id IN ({$placeholders})";
+            
+            $stmt = $this->getConnection()->prepare($sql);
+            $stmt->execute($ids);
+
+            return $stmt->rowCount();
+        } catch (PDOException $e) {
+            $this->throwPDOError();
+        } catch (Throwable $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * Executa a lógica de UPDATE para um modelo existente.
      *
      * @return bool
